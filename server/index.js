@@ -2,6 +2,7 @@ const express = require('express')
 const util = require('./utils.js')
 const app = express()
 const PORT = 3000
+const mysql = require('mysql')
 
 app.use(express.json())
 
@@ -20,13 +21,17 @@ app.post('/login', (req, res) => {
      * Need to add a segment handling password hash retrieval
      */
     // Create connection
+    let conn = util.createConnection();
     // Form query
-    // Send Query
-    // Check that there are results
-    // If multiple results, there is something wrong
-    // store the password hash for verification
-    let verificationHash = "abcd";
-    if(pwHash === verificationHash)
+    let query = "failed";
+    conn.query('select (hash, salt) from users where username = ?', user, (error, results, fields) => {
+        if(error) throw error;
+        query = results;
+        console.log(fields);
+    });
+    let verificationHash = results.hash;
+    let salt = results.salt;
+    if(util.verify(verificationHash, salt))
     {
         let ret = {
             success: 1,
@@ -44,20 +49,59 @@ app.post('/login', (req, res) => {
     }
 })
 
+app.get('/salt', (req, res) => {
+    res = util.generateSalt();
+})
+
+app.post('/salt', (req, res) => {
+    let user = req.body.username;
+    let query = 'failed';
+    let conn = util.createConnection();
+    conn.query('select salt from users where username = ?', user, (error, results, fields) => {
+        if(error) 
+        {
+            let ret = {
+                success: 0,
+                username: user,
+                err: error
+            }
+            res.send(ret);
+        }
+        query = results.salt;
+        console.log(fields);
+    });
+    let ret = {
+        success: 1,
+        username: user,
+        salt: salt
+    }
+    res.send(ret)
+})
+
 app.post('/signup', (req, res) => {
     let user = req.body.username;
     let pwHash = req.body.hash;
+    let salt = req.body.salt;
     /**
      * Need to add a segment handling password hash retrieval
      */
     // Create connection
-    // Form query for any existing usernames
-    // Send Query
-    // Check that there are results
-    // If there are results, return an error via err stating such
+    let conn = util.createConnection();
     let err;
+    conn.query('select hash from users where username = ?', user, (error, results, fields) => {
+        if(error) throw error;
+        err = results.hash;
+        console.log(fields);
+    });
     if(!err)
     {
+        conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
+            if(error)
+            {
+                throw error;
+            }
+            console.log(fields);
+        })
         let ret = {
             success: 1,
             username: user
