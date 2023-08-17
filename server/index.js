@@ -50,7 +50,11 @@ app.post('/login', (req, res) => {
 })
 
 app.get('/salt', (req, res) => {
-    res = util.generateSalt();
+    let ret = {
+        success: 1,
+        salt: util.generateSalt()
+    }
+    res.send(ret);
 })
 
 app.post('/salt', (req, res) => {
@@ -67,15 +71,15 @@ app.post('/salt', (req, res) => {
             }
             res.send(ret);
         }
-        query = results.salt;
+        query = results[0].salt;
         console.log(fields);
+        let ret = {
+            success: 1,
+            username: user,
+            salt: query
+        }
+        res.send(ret)
     });
-    let ret = {
-        success: 1,
-        username: user,
-        salt: salt
-    }
-    res.send(ret)
 })
 
 app.post('/signup', (req, res) => {
