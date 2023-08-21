@@ -82,6 +82,17 @@ app.post('/salt', (req, res) => {
     });
 })
 
+// app.post('/test', (req, res) => {
+//     let salt = req.body.salt;
+//     let pass = req.body.password;
+//     let hash = util.hash(pass, salt);
+//     console.log(hash);
+//     let ret = {
+//         hash: hash
+//     }
+//     res.send(ret);
+// })
+
 app.post('/signup', (req, res) => {
     let user = req.body.username;
     let pwHash = req.body.hash;
@@ -92,25 +103,31 @@ app.post('/signup', (req, res) => {
     // Create connection
     let conn = util.createConnection();
     let err;
-    conn.query('select hash from users where username = ?', user, (error, results, fields) => {
-        if(error) throw error;
-        err = results.hash;
-        console.log(fields);
+    conn.query('select pwHash from users where username = ?', [user], (error, results, fields) => {
+        if(error) err = error;
     });
     if(!err)
     {
+        let suc = false;
         conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
-            if(error)
+            if(!error)
             {
-                throw error;
+                let ret = {
+                    success: true,
+                    username: user,
+                    salt: salt
+                }
+                res.send(ret);
             }
-            console.log(fields);
+            else
+            {
+                let ret = {
+                    success: false,
+                    error: {code: error.code, errno: error.errno}
+                }
+                res.send(ret);
+            }
         })
-        let ret = {
-            success: 1,
-            username: user
-        }
-        res.send(ret)
     }
     else
     {
