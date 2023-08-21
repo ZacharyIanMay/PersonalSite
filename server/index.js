@@ -17,13 +17,9 @@ app.listen(PORT, () => {
 app.post('/login', (req, res) => {
     let user = req.body.username;
     let pwHash = req.body.hash;
-    /**
-     * Need to add a segment handling password hash retrieval
-     */
     // Create connection
     let conn = util.createConnection();
     // Form query
-    let query = "failed";
     conn.query('select pwHash from users where username = ?', user, (error, results, fields) => 
     {
         
@@ -35,7 +31,7 @@ app.post('/login', (req, res) => {
             }
             res.send(ret);
         }
-        
+
         let verificationHash = results[0].pwHash;
         console.log(pwHash);
         console.log(verificationHash);
@@ -56,6 +52,7 @@ app.post('/login', (req, res) => {
             res.send(ret);
         }
     });
+    conn.end();
 })
 
 app.get('/salt', (req, res) => {
@@ -89,6 +86,7 @@ app.post('/salt', (req, res) => {
         }
         res.send(ret)
     });
+    conn.end();
 })
 
 // app.post('/test', (req, res) => {
@@ -136,7 +134,8 @@ app.post('/signup', (req, res) => {
                 }
                 res.send(ret);
             }
-        })
+        });
+        conn.end();
     }
     else
     {
@@ -149,7 +148,37 @@ app.post('/signup', (req, res) => {
 })
 
 app.post('/task', (req, res) => {
-
+    let user = req.body.username;
+    let task = req.body.task;
+    // deadline needs to be in yyyy-mm-dd hh:mm:ss
+    // TODO: add handling to enforce this format
+    let deadline = req.body.deadline;
+    // Create connection
+    let conn = util.createConnection();
+    // Form query
+    let suc = false;
+    conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
+        if(!error)
+        {
+            let ret = {
+                success: true,
+                username: user,
+                task: task,
+                deadline: deadline
+            }
+            res.send(ret);
+        }
+        else
+        {
+            console.log(error);
+            let ret = {
+                success: false,
+                error: {code: error.code, errno: error.errno}
+            }
+            res.send(ret);
+        }
+    });
+    conn.end();
 })
 
 app.get('/task', (req, res) => {
