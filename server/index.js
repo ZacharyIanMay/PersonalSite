@@ -24,29 +24,38 @@ app.post('/login', (req, res) => {
     let conn = util.createConnection();
     // Form query
     let query = "failed";
-    conn.query('select (hash, salt) from users where username = ?', user, (error, results, fields) => {
-        if(error) throw error;
-        query = results;
-        console.log(fields);
+    conn.query('select pwHash from users where username = ?', user, (error, results, fields) => 
+    {
+        
+        if(error || results.length === 0)
+        {
+            let ret = {
+                success: 0,
+                error: "Incorrect Username or Password"
+            }
+            res.send(ret);
+        }
+        
+        let verificationHash = results[0].pwHash;
+        console.log(pwHash);
+        console.log(verificationHash);
+        if(pwHash === verificationHash)
+        {
+            let ret = {
+                success: 1,
+                username: user
+            }
+            res.send(ret)
+        }
+        else
+        {
+            let ret = {
+                success: 0,
+                username: user
+            }
+            res.send(ret);
+        }
     });
-    let verificationHash = results.hash;
-    let salt = results.salt;
-    if(util.verify(verificationHash, salt))
-    {
-        let ret = {
-            success: 1,
-            username: user
-        }
-        res.send(ret)
-    }
-    else
-    {
-        let ret = {
-            success: 0,
-            username: user
-        }
-        res.send(ret);
-    }
 })
 
 app.get('/salt', (req, res) => {

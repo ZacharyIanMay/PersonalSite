@@ -31,28 +31,6 @@ module.exports =
         return h;
     },
 
-    /**
-     * 
-     * @param {*} hash expects the salted hash of users password
-     * @param {*} user username to verify salted hash
-     * @returns true if password is correct for the user, false otherwise
-     */
-    verify : function (hash, user)
-    {
-        let conn = createConnection();
-        // TODO: get user's hash and salt
-
-        let ver = 'TODO';
-        if(hash === ver)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    },
-
     generateSalt : function ()
     {
         console.log('working');
