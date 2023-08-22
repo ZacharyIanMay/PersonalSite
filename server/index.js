@@ -115,7 +115,6 @@ app.post('/signup', (req, res) => {
     });
     if(!err)
     {
-        let suc = false;
         conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
             if(!error)
             {
@@ -156,7 +155,6 @@ app.post('/task', (req, res) => {
     // Create connection
     let conn = util.createConnection();
     // Form query
-    let suc = false;
     conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
         if(!error)
         {
