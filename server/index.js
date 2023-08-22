@@ -181,12 +181,63 @@ app.post('/task', (req, res) => {
     conn.end();
 })
 
+/**
+ * gets all the tasks for a specific user
+ */
 app.get('/task', (req, res) => {
+    let user = req.body.username;
 
+    let conn = util.createConnection();
+    // Form query
+    conn.query('select * from tasks where username = ?', user, (error, results, fields) => 
+    {
+        let ret = {
+                success: 0,
+                username: user
+            }
+        if(error)
+        {
+            ret.error = error;
+            res.send(ret);
+        }
+        else if(results.length === 0)
+        {
+            ret.error = "No tasks";
+            res.send(ret);
+        }
+
+        ret.tasks = results;
+        ret.success = 1;
+        res.send(ret);
+    });
+
+    conn.end();
 })
 
 app.delete('/task', (req, res) => {
+    let user = req.body.username;
+    let id = req.body.taskid;
 
+    let conn = util.createConnection();
+    // Form query
+    conn.query('delete from tasks where username = ? and taskid = ?', [user, id], (error, results, fields) => 
+    {
+        let ret = {
+            success: 0,
+            username: user,
+            taskid: id
+        }
+
+        if(error)
+        {
+            ret.error = error;
+            res.send(ret);
+        }
+
+        ret.success = 1;
+        res.send(ret);
+    });
+    conn.end();
 })
 
 app.post('/project', (req, res) => {
