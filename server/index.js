@@ -7,7 +7,12 @@ const mysql = require('mysql')
 app.use(express.json())
 
 app.get('/', (req, res) => {
-    res.send('Hello World')
+    let jwt = util.createJWT();
+    setTimeout(function() {
+        let result = util.isJWTValid(jwt);
+        res.send({"JWT": jwt});
+    }, 10000)
+    
 })
 
 app.listen(PORT, () => {
