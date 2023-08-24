@@ -42,7 +42,7 @@ module.exports =
         return r;
     },
 
-    createJWT : function ()
+    createJWT : function (user)
     {
         let jwt;
         let header = 
@@ -61,7 +61,8 @@ module.exports =
         {
             "iss": "Jal Home",
             "iat": now,
-            "exp": exp
+            "exp": exp,
+            "user": user
         }
         let bodyEnc = base64url(JSON.stringify(body));
 
