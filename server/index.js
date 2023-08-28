@@ -226,14 +226,14 @@ app.delete('/task', (req, res) => {
     conn.end();
 })
 
-app.post('/project', (req, res) => {
+// app.post('/project', (req, res) => {
 
-})
+// })
 
-app.get('/project', (req, res) => {
-    // return array of projects
-})
+// app.get('/project', (req, res) => {
+//     // return array of projects
+// })
 
-app.delete('/project', (req, res) => {
+// app.delete('/project', (req, res) => {
     
-})
+// })
