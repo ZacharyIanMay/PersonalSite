@@ -6,17 +6,9 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import HelloWorld from './components/HelloWorld.vue'
 import ToDo from "./components/ToDo.vue"
-
-export default {
-  name: 'App',
-  components: {
-    ToDo,
-    HelloWorld
-  }
-}
 </script>
 
 <style>

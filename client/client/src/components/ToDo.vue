@@ -2,62 +2,49 @@
     <div>
         <table>
             <tr>
-                <th>
-                    <input type="checkbox" id="todo-item1" />
-                </th>
-                <th>
-                    <p>[insert task name here]</p>
-                </th>
-                <th>
-                    <p>[insert task deadline here]</p>
-                </th>
+                <th>Selection</th>
+                <th>Task ID</th>
+                <th>Task</th>
+                <th>Deadline</th>
             </tr>
-            <tr>
-                <th>
-                    <input type="checkbox" id="todo-item2" />
-                </th>
-                <th>
-                    <p>[insert task name here]</p>
-                </th>
-                <th>
-                    <p>[insert task deadline here]</p>
-                </th>
-            </tr>
-            <tr>
-                <th>
-                    <input type="checkbox" id="todo-item3" />
-                </th>
-                <th>
-                    <p>[insert task name here]</p>
-                </th>
-                <th>
-                    <p>[insert task deadline here]</p>
-                </th>
-            </tr>
-            <tr>
-                <th>
-                    <input type="checkbox" id="todo-item4" />
-                </th>
-                <th>
-                    <p>[insert task name here]</p>
-                </th>
-                <th>
-                    <p>[insert task deadline here]</p>
-                </th>
+            <tr v-for="(task, index) in tasks" :key="index">
+                <td><input type="checkbox" :index=id /></td>
+                <td>{{task.taskid}}</td>
+                <td>{{task.task}}</td>
+                <td>{{new Date(task.deadline).toString()}}</td>
             </tr>
         </table>
-        
     </div>
 </template>
 
-<script>
-export default
+<script setup>
+import {defineProps, ref} from 'vue';
+import axios from 'axios';
+
+const props = defineProps({user:String});
+
+const username = ref(props.user);
+if(!username.value)
 {
-    props:
-    {
-        list: {default: false}
-    }
+    username.value = 'admin';
 }
+
+const tasks = ref({});
+
+axios.post("http://localhost:3000/usertask", {username: username}).then(function (response) {
+    console.log(response);
+    tasks.value = response.data;
+    if(tasks.value.success)
+    {
+        tasks.value = tasks.value.tasks;
+    }
+    else
+    {
+        tasks.value = [{taskid: 0, username: username, task: "No tasks", deadline:Date.now()}];
+    }
+  }).catch(function (error) {
+    console.log(`Error ${error}`);
+  });
 </script>
 
 <style scoped>

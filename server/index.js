@@ -1,17 +1,19 @@
 const express = require('express')
 const util = require('./utils.js')
+const cors = require('cors')
 const app = express()
 const PORT = 3000
 const mysql = require('mysql')
 
 app.use(express.json())
+app.use(cors())
 
 app.get('/', (req, res) => {
-    let jwt = util.createJWT();
+    let jwt = util.createJWT('test');
     setTimeout(function() {
         let result = util.isJWTValid(jwt);
-        res.send({"JWT": jwt});
-    }, 10000)
+        res.send({"JWT": jwt, "Result": result});
+    }, 1000)
     
 })
 
@@ -164,8 +166,8 @@ app.post('/task', (req, res) => {
  * additionally if failed res contains field error
  * if succesful res contains field tasks
  */
-app.get('/task', (req, res) => {
-    let user = req.body.username;
+app.post('/usertask', (req, res) => {
+    let user = req.body.username._value;
 
     let conn = util.createConnection();
     // Form query
@@ -174,6 +176,42 @@ app.get('/task', (req, res) => {
         let ret = {
             success: false,
             username: user
+        }
+        if(error)
+        {
+            ret.error = error;
+        }
+        else if(results.length === 0)
+        {
+            ret.error = "No tasks";
+        }
+        else
+        {
+            ret.tasks = results;
+            ret.success = true;
+        }
+        res.send(ret);
+    });
+
+    conn.end();
+})
+
+/**
+ * gets all the tasks
+ * req requires fields username
+ * res contains fields success
+ * additionally if failed res contains field error
+ * if succesful res contains field tasks
+ */
+app.post('/task', (req, res) => {
+    let user = req.body.username;
+
+    let conn = util.createConnection();
+    // Form query
+    conn.query('select * from tasks', user, (error, results, fields) => 
+    {
+        let ret = {
+            success: false
         }
         if(error)
         {
