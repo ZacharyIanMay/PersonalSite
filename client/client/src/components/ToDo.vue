@@ -1,6 +1,7 @@
 <template>
     <div>
-        <table>
+        <h3>Welcome {{ username }}</h3>
+        <table class="center">
             <tr>
                 <th>Selection</th>
                 <th>Task ID</th>
@@ -56,5 +57,10 @@ p
 {
     padding-right: 10px;
     padding-left: 10px;
+}
+.center
+{
+    margin-left:auto;
+    margin-right:auto;
 }
 </style>

@@ -41,7 +41,7 @@ app.post('/login', (req, res) => {
         if(error || results.length === 0)
         {
             console.log(error);
-            ret.error =  "Incorrect Username or Password(1)";
+            ret.error =  "Incorrect Username or Password";
             res.send(ret);
         }
         else

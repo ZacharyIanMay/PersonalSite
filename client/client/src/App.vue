@@ -1,13 +1,13 @@
 <template>
   <div>
     <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <SignIn />
     <ToDo />
   </div>
 </template>
 
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import SignIn from './components/SignIn.vue'
 import ToDo from "./components/ToDo.vue"
 </script>
 
