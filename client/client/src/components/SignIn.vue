@@ -15,28 +15,33 @@
             <br>
             <button id="button" @click="log(username, password)">Login</button>
         </div>
+        <p id="error">{{ errorMessage }}</p>
     </div>
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {ref, defineEmits} from 'vue';
 import axios from 'axios';
 
+const emit = defineEmits(['login']);
 const username = ref('');
 const password = ref('');
 const token = ref({});
+const errorMessage = ref('');
 
 function log(username, password)
 {
     axios.post("http://localhost:3000/login", {username: username, password: password}).then(function (response) {
-    console.log(response);
+    //console.log(response);
     if(response.data.success)
     {
         token.value = response.data.token;
+        errorMessage.value = '';
+        emit('login', token.value);
     }
     else
     {
-        //TODO: put up an error, incorrect username or password
+        errorMessage.value = 'Incorrect Username or Password';
     }
   }).catch(function (error) {
     console.log(`Error ${error}`);
@@ -55,5 +60,9 @@ function log(username, password)
 {
     margin-left:0%;
     margin-right:100%;
+}
+#error
+{
+    color:red;
 }
 </style>

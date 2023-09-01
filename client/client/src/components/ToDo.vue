@@ -9,7 +9,7 @@
                 <th>Deadline</th>
             </tr>
             <tr v-for="(task, index) in tasks" :key="index">
-                <td><input type="checkbox" :index=id /></td>
+                <td><input type="checkbox" id="{{ index }}" /></td>
                 <td>{{task.taskid}}</td>
                 <td>{{task.task}}</td>
                 <td>{{new Date(task.deadline).toString()}}</td>
@@ -33,7 +33,7 @@ if(!username.value)
 const tasks = ref({});
 
 axios.post("http://localhost:3000/usertask", {username: username}).then(function (response) {
-    console.log(response);
+    //console.log(response);
     tasks.value = response.data;
     if(tasks.value.success)
     {
