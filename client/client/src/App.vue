@@ -1,42 +1,30 @@
 <template>
   <div>
     <p>Token: {{ token }}</p>
-    <p>User: {{ user }}</p>
+    <p>User: {{ username }}</p>
     <img alt="Vue logo" src="./assets/logo.png">
     <SignIn v-if="!token" @login="storeToken($event)"/>
-    <ToDo v-if="token" />
+    <ToDo v-if="token" :user="username" />
   </div>
 </template>
 
 <script setup>
 import SignIn from './components/SignIn.vue'
 import ToDo from "./components/ToDo.vue"
-import base64url  from 'base64url';
+import axios  from 'axios';
 import {ref} from 'vue';
 
 const token = ref('');
-const user = ref('');
+const username = ref('');
 
 function storeToken(event)
 {
   token.value = event;
-  user.value = getUser(token.value);
-}
-
-function getUser(JWT)
-{
-  //TODO: Fix this
-  console.log("Testing nested function");
-  let split = JWT.split('.');
-  console.log(1);
-  let body = base64url.decode(split[1]);
-  console.log(2);
-  body = JSON.parse(body);
-  console.log(3);
-  let user = body.user;
-  console.log(body);
-  console.log(user);
-  return user;
+  axios.post("http://localhost:3000/jwt", {jwt: token.value}).then(function (response) {
+  username.value = response.data.user;
+  }).catch(function (error) {
+    console.log(`Error ${error}`);
+  });
 }
 </script>
 

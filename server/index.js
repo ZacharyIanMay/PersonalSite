@@ -12,7 +12,11 @@ app.get('/', (req, res) => {
     let jwt = util.createJWT('test');
     setTimeout(function() {
         let result = util.isJWTValid(jwt);
-        res.send({"JWT": jwt, "Result": result});
+        let user = '';
+
+        util.getJWTUser(jwt);
+
+        res.send({"JWT": jwt, "User": user, "Result": result});
     }, 1000)
     
 })
@@ -38,13 +42,7 @@ app.post('/login', (req, res) => {
             success: false,
             username: user
         }
-        if(error || results.length === 0)
-        {
-            console.log(error);
-            ret.error =  "Incorrect Username or Password";
-            res.send(ret);
-        }
-        else
+        if(!error && results.length === 1)
         {
             let salt = results[0].salt;
             let pwHash = util.hash(pass, salt);
@@ -61,8 +59,27 @@ app.post('/login', (req, res) => {
             }
             res.send(ret);
         }
+        else
+        {
+            console.log(error);
+            ret.error =  "Incorrect Username or Password";
+            res.send(ret);
+        }
     });
     conn.end();
+})
+
+/**
+ * 
+ */
+app.post('/jwt', (req, res) => {
+    let jwt = req.body.jwt;
+    let user = util.getJWTUser(jwt);
+    let ret =
+    {
+        user: user
+    }
+    res.send(ret);
 })
 
 // app.post('/test', (req, res) => {

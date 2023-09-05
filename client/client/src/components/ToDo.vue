@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>Welcome {{ username }}</h3>
+        <h3>Welcome {{ user }}</h3>
         <table class="center">
             <tr>
                 <th>Selection</th>
@@ -21,14 +21,8 @@
 <script setup>
 import {defineProps, ref} from 'vue';
 import axios from 'axios';
-
 const props = defineProps({user:String});
-
-const username = ref(props.user);
-if(!username.value)
-{
-    username.value = 'admin';
-}
+let username = ref(props.user);
 
 const tasks = ref({});
 
