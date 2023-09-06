@@ -1,25 +1,29 @@
 <template>
     <div>
-        <h3>Login</h3>
-        <p>{{ token }}</p>
-        <div id="labels">
-            <label for="username">Username:  </label>
-            <br>
-            <label for="password">Password:  </label>
-            <br>
+        <div v-if="!register">
+            <h3>Login</h3>
+            <div id="labels">
+                <label for="username">Username:  </label>
+                <br>
+                <label for="password">Password:  </label>
+                <br>
+            </div>
+            <div id="inputs">
+                <input type="text" id="username" v-model="username" placeholder="username" />
+                <br>
+                <input type="password" id="password" v-model="password" placeholder="password" />
+                <br>
+                <button id="button" @click="log(username, password)">Login</button>
+                <button id="register" @click="reg()">Register</button>
+            </div>
+            <p id="error">{{ errorMessage }}</p>
         </div>
-        <div id="inputs">
-            <input type="text" id="username" v-model="username" placeholder="username" />
-            <br>
-            <input type="password" id="password" v-model="password" placeholder="password" />
-            <br>
-            <button id="button" @click="log(username, password)">Login</button>
-        </div>
-        <p id="error">{{ errorMessage }}</p>
+        <RegisterUser v-if="register" @login="send($event)" />
     </div>
 </template>
 
 <script setup>
+import RegisterUser from './RegisterUser.vue';
 import {ref, defineEmits} from 'vue';
 import axios from 'axios';
 
@@ -28,6 +32,7 @@ const username = ref('');
 const password = ref('');
 const token = ref({});
 const errorMessage = ref('');
+const register = ref(0);
 
 function log(username, password)
 {
@@ -48,6 +53,16 @@ function log(username, password)
   });
 }
 
+function send(event)
+{
+    emit('login', event);
+}
+
+function reg()
+{
+    register.value = 1;
+}
+
 </script>
 
 <style scoped>
@@ -55,8 +70,10 @@ function log(username, password)
 {
     display:inline-block;
     vertical-align:top;
+    margin-top: 2px;
+    padding: 5px;
 }
-#button
+button
 {
     margin-left:0%;
     margin-right:100%;
@@ -64,5 +81,13 @@ function log(username, password)
 #error
 {
     color:red;
+}
+label
+{
+    margin-top: 2px;
+}
+input, button
+{
+    margin: 2px;
 }
 </style>

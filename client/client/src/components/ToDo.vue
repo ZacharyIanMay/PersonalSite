@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>Welcome {{ user }}</h3>
+        <h3>Welcome {{ username }}</h3>
         <table class="center">
             <tr>
                 <th>Selection</th>
@@ -19,27 +19,46 @@
 </template>
 
 <script setup>
-import {defineProps, ref} from 'vue';
-import axios from 'axios';
-const props = defineProps({user:String});
-let username = ref(props.user);
+    import {defineProps, ref, watch} from 'vue';
+    import axios from 'axios';
+    const props = defineProps({user: String});
+    const tasks = ref({});
+    const username = ref(props.user);
+    axios.post("http://localhost:3000/usertask", {username: username.value}).then(function (response) {
+        //console.log(response);
+        tasks.value = response.data;
+        if(tasks.value.success)
+        {
+            tasks.value = tasks.value.tasks;
+        }
+        else
+        {
+            tasks.value = [{taskid: 0, username: username, task: "No tasks", deadline:Date.now()}];
+        }
+    }).catch(function (error) {
+        console.log(`Error ${error}`);
+    });
 
-const tasks = ref({});
+    watch(props, () => {
+        setTimeout(function() {
+            username.value = props.user;
+            axios.post("http://localhost:3000/usertask", {username: username.value}).then(function (response) {
+                console.log(response);
+                tasks.value = response.data;
+                if(tasks.value.success)
+                {
+                    tasks.value = tasks.value.tasks;
+                }
+                else
+                {
+                    tasks.value = [{taskid: 0, username: username, task: "No tasks", deadline:Date.now()}];
+                }
+            }).catch(function (error) {
+                console.log(`Error ${error}`);
+            });  
+        }, 10)
+    });
 
-axios.post("http://localhost:3000/usertask", {username: username}).then(function (response) {
-    //console.log(response);
-    tasks.value = response.data;
-    if(tasks.value.success)
-    {
-        tasks.value = tasks.value.tasks;
-    }
-    else
-    {
-        tasks.value = [{taskid: 0, username: username, task: "No tasks", deadline:Date.now()}];
-    }
-  }).catch(function (error) {
-    console.log(`Error ${error}`);
-  });
 </script>
 
 <style scoped>

@@ -184,7 +184,7 @@ app.post('/task', (req, res) => {
  * if succesful res contains field tasks
  */
 app.post('/usertask', (req, res) => {
-    let user = req.body.username._value;
+    let user = req.body.username;
 
     let conn = util.createConnection();
     // Form query
@@ -194,6 +194,7 @@ app.post('/usertask', (req, res) => {
             success: false,
             username: user
         }
+        console.log(results);
         if(error)
         {
             ret.error = error;
