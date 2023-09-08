@@ -74,8 +74,10 @@
     watch(update, () => {
         setTimeout(function() {
             username.value = props.user;
+            console.log(username.value);
             axios.post("http://localhost:3000/usertask", {username: username.value}).then(function (response) {
                 tasks.value = response.data;
+                console.log(response.data);
                 if(tasks.value.success)
                 {
                     tasks.value = tasks.value.tasks;
@@ -98,17 +100,10 @@
     function createTask(event)
     {
         axios.post("http://localhost:3000/task", {username: username.value, task: event.task, deadline: event.deadline}).then(function () {
-                if(tasks.value.success)
-                {
-                    update.value = 1;
-                    setTimeout(function() {
-                        update.value = 0;
-                    }, 10)
-                }
-                else
-                {
-                    tasks.value = [{taskid: 0, username: username, task: "No tasks", deadline:Date.now()}];
-                }
+                update.value = 1;
+                setTimeout(function() {
+                    update.value = 0;
+                }, 50)
                 newTask.value = 0;
             }).catch(function (error) {
                 console.log(`Error ${error}`);
