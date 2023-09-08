@@ -204,7 +204,6 @@ app.post('/usertask', (req, res) => {
             success: false,
             username: user
         }
-        console.log(results);
         if(error)
         {
             ret.error = error;
