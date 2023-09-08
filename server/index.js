@@ -82,6 +82,16 @@ app.post('/jwt', (req, res) => {
     res.send(ret);
 })
 
+/**
+ * 
+ */
+app.post('/verify', (req, res) => {
+    let jwt = req.body.jwt;
+    let ret = {};
+    ret.valid = util.isJWTValid(jwt);
+    res.send(ret);
+})
+
 // app.post('/test', (req, res) => {
 //     let salt = req.body.salt;
 //     let pass = req.body.password;

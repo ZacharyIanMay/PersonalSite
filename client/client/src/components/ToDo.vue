@@ -12,7 +12,7 @@
             </tr>
 
             <tr v-for="(task, index) in tasks" :key="index">
-                <td><input type="checkbox" id="{{ index }}" /></td>
+                <td><input type="checkbox" :id="index" /></td>
                 <td>{{task.taskid}}</td>
                 <td>{{task.task}}</td>
                 <td>{{new Date(task.deadline).toString()}}</td>
@@ -74,10 +74,8 @@
     watch(update, () => {
         setTimeout(function() {
             username.value = props.user;
-            console.log(username.value);
             axios.post("http://localhost:3000/usertask", {username: username.value}).then(function (response) {
                 tasks.value = response.data;
-                console.log(response.data);
                 if(tasks.value.success)
                 {
                     tasks.value = tasks.value.tasks;
@@ -113,9 +111,13 @@
 </script>
 
 <style scoped>
-table, th, td
+table
 {
     border:1px solid black;
+}
+tr
+{
+    box-shadow: 0px 0px 0px 1px rgb(0, 0, 0);
 }
 p
 {

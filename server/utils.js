@@ -51,7 +51,7 @@ module.exports =
 
         let now = Date.now();
         // TODO: change this time to give something like 30 minutes once done with testing
-        let exp = now + 10000;
+        let exp = now + (30 * 24 * 60 * 60 * 1000);
         let body = 
         {
             "iss": "Jal Home",
@@ -91,7 +91,7 @@ module.exports =
         }
         else
         {
-            throw new Error("Login token expired.");
+            return false;
         }
     },
 
