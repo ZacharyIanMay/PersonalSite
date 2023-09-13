@@ -187,6 +187,34 @@ app.post('/task', (req, res) => {
 })
 
 /**
+ * 
+ */
+app.post('/delete', (req, res) => {
+    let user = req.body.username;
+    let taskid = req.body.taskid;
+    // Create connection
+    let conn = util.createConnection();
+    console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
+    // Form query
+    conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
+        let ret = {
+            success: false,
+            username: user
+        }
+        if(!error)
+        {
+            ret.success = true;
+        }
+        else
+        {
+            ret.error = {code: error.code, errno: error.errno};
+        }
+        res.send(ret);
+    });
+    conn.end();
+})
+
+/**
  * gets all the tasks for a given username
  * req requires fields username
  * res contains fields success and username

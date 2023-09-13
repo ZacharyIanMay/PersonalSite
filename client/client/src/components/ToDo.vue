@@ -12,7 +12,7 @@
             </tr>
 
             <tr v-for="(task, index) in tasks" :key="index">
-                <td><input type="checkbox" :id="index" /></td>
+                <td><input type="checkbox" :id="index" :value="task.taskid" v-model="selected" /></td>
                 <td>{{task.taskid}}</td>
                 <td>{{task.task}}</td>
                 <td>{{new Date(task.deadline).toString()}}</td>
@@ -23,6 +23,7 @@
         <TaskInput v-if="newTask" @submitTask="createTask($event)" />
 
         <button v-if="!newTask" id="button" @click="addTask()">Add a task</button>
+        <button v-if="!newTask" id="delete" @click="deleteTasks()">Delete selected</button>
     </div>
 </template>
 
@@ -36,6 +37,7 @@
     const username = ref(props.user);
     const newTask = ref(0);
     const update = ref(0);
+    const selected = ref([]);
 
     axios.post("http://localhost:3000/usertask", {username: username.value}).then(function (response) {
         //console.log(response);
@@ -89,6 +91,23 @@
             });  
         }, 10)
     });
+
+    function deleteTasks()
+    {
+        let list = selected.value;
+        for(let i = 0; i < list.length; i++)
+        {
+            axios.post("http://localhost:3000/delete", {username: username.value, taskid: list[i]}).then(function () {
+                console.log("deleted task: " + list[i]);
+            }).catch(function (error) {
+                console.log(`Error ${error}`);
+            });
+        }
+        update.value = 1;
+        setTimeout(function() {
+            update.value = 0;
+        }, 50)
+    }
 
     function addTask()
     {
