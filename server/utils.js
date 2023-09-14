@@ -20,7 +20,6 @@ module.exports =
         );
         conn.connect((err) => {
             if(err) throw err;
-            console.log("Connected");
         })
         return conn;
     },
@@ -34,11 +33,8 @@ module.exports =
 
     generateSalt : function ()
     {
-        console.log('working');
         let b = crypto.randomBytes(4);
-        console.log(b);
         let r = b.readInt32BE();
-        console.log(r);
         return r;
     },
 
@@ -54,9 +50,7 @@ module.exports =
 
         let now = Date.now();
         // TODO: change this time to give something like 30 minutes once done with testing
-        let exp = now + 10000;
-        console.log(now);
-        console.log(exp);
+        let exp = now + (30 * 24 * 60 * 60 * 1000);
         let body = 
         {
             "iss": "Jal Home",
@@ -96,8 +90,17 @@ module.exports =
         }
         else
         {
-            throw new Error("Login token expired.");
+            return false;
         }
+    },
+
+    getJWTUser : function (jwt)
+    {
+        let split = jwt.split('.');
+        let body = base64url.decode(split[1]);
+        body = JSON.parse(body);
+        user = body.user;
+        return user;
     }
 
 };
