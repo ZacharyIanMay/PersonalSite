@@ -30,22 +30,18 @@ module.exports
         }, 1000)
     }
 
-    function postJWT(req, res)
+    function postJWT(jwt)
     {
-        let jwt = req.body.jwt;
         let user = util.getJWTUser(jwt);
         let ret =
         {
             user: user
         }
-        res.send(ret);
+        return ret;
     }
 
-    function postLogin(req, res)
+    function postLogin(user, pass, conn)
     {
-        let user = req.body.username;
-        let pass = req.body.password;
-        let conn = util.createConnection();
         conn.query('select salt, pwHash from users where username = ?', user, (error, results, fields) => 
         {
             let ret = {
@@ -67,37 +63,32 @@ module.exports
                 {
                     ret.error = "Incorrect Username or Password"
                 }
-                res.send(ret);
+                return ret;
             }
             else
             {
                 console.log(error);
                 ret.error =  "Incorrect Username or Password";
-                res.send(ret);
+                return ret;
             }
         });
-        conn.end();
     }
 
-    function postVerify(req, res)
+    function postVerify(jwt)
     {
-        let jwt = req.body.jwt;
         let ret = {};
         ret.valid = util.isJWTValid(jwt);
-        res.send(ret);
+        return ret;
     }
 
-    function postSignup(req, res)
+    function postSignup(user, pass, conn)
     {
-        let user = req.body.username;
-        let pass = req.body.password;
         let salt = util.generateSalt();
         let pwHash = util.hash(pass, salt);
         /**
          * Need to add a segment handling password hash retrieval
          */
         // Create connection
-        let conn = util.createConnection();
         let err;
         conn.query('select pwHash from users where username = ?', [user], (error, results, fields) => {
             if(error) err = error;
@@ -121,28 +112,51 @@ module.exports
                 {
                     ret.error = {code: error.code, errno: error.errno};
                 }
-                res.send(ret);
+                return ret;
             });
-            conn.end();
         }
         else
         {
             ret.error = err;
-            res.send(ret);
+            return ret;
         }
     }
 
-    function postTask(req, res)
+    function postTask(user, task, deadline, conn)
+    {
+        // deadline needs to be in yyyy-mm-dd hh:mm:ss
+        // TODO: add handling to enforce this format
+        // Create connection
+        // Form query
+        conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
+            let ret = {
+                success: false,
+                username: user
+            }
+            if(!error)
+            {
+                ret.success = true;
+            }
+            else
+            {
+                ret.error = {code: error.code, errno: error.errno};
+            }
+            return ret;
+        });
+    }
+
+    function postTaskS(req, res)
     {
         let user = req.body.username;
         let task = req.body.task;
+        let taskid = req.body.tasks
         // deadline needs to be in yyyy-mm-dd hh:mm:ss
         // TODO: add handling to enforce this format
         let deadline = req.body.deadline;
         // Create connection
         let conn = util.createConnection();
         // Form query
-        conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
+        conn.query('insert into tasks value ?, ?, ?, ?', [taskid, user, task, deadline], (error, results, fields) => {
             let ret = {
                 success: false,
                 username: user
@@ -160,12 +174,9 @@ module.exports
         conn.end();
     }
 
-    function postDelete(req, res)
+    function postDelete(user, taskid, conn)
     {
-        let user = req.body.username;
-        let taskid = req.body.taskid;
         // Create connection
-        let conn = util.createConnection();
         console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
         // Form query
         conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
@@ -181,15 +192,13 @@ module.exports
             {
                 ret.error = {code: error.code, errno: error.errno};
             }
-            res.send(ret);
+            return ret;
         });
-        conn.end();
     }
 
-    function postUsertask(req, res)
+    function postUsertask(user, conn)
     {
         let user = req.body.username;
-
         let conn = util.createConnection();
         // Form query
         conn.query('select * from tasks where username = ?', user, (error, results, fields) => 
@@ -211,10 +220,8 @@ module.exports
                 ret.tasks = results;
                 ret.success = true;
             }
-            res.send(ret);
+            return ret;
         });
-
-        conn.end();
     }
 
 }
@@ -227,7 +234,9 @@ app.listen(PORT, () => {
     console.log(`App is listening at http://localhost:${PORT}`)
 })
 
-app.get('/', (req, res) => {getBase(req, res)})
+app.get('/', (req, res) => {
+    getBase(req, res)
+})
 
 /**
  * Checks user credentials and issues a JWT login token if login is correct
@@ -236,17 +245,32 @@ app.get('/', (req, res) => {getBase(req, res)})
  * if failed res additionally contains error
  * if succesful res additionally contains token
  */
-app.post('/login', (req, res) => { postLogin(req, res)})
+app.post('/login', (req, res) => {
+    let user = req.body.username;
+    let pass = req.body.password;
+    let conn = util.createConnection();
+    let ret = postLogin(user, pass, conn);
+    conn.end();
+    res.send(ret);
+})
 
 /**
  * 
  */
-app.post('/jwt', (req, res) => {postJWT(req, res)})
+app.post('/jwt', (req, res) => {
+    let jwt = req.body.jwt;
+    let ret = postJWT(jwt)
+    res.send(ret);
+})
 
 /**
  * 
  */
-app.post('/verify', (req, res) => {postVerify(req, res)})
+app.post('/verify', (req, res) => {
+    let jwt = req.body.jwt;
+    let ret = postVerify(jwt);
+    res.send(ret);
+})
 
 /**
  * creates a user account
@@ -254,7 +278,14 @@ app.post('/verify', (req, res) => {postVerify(req, res)})
  * res contains fields success and username
  * additionally, error if failed, or token is successful
  */
-app.post('/signup', (req, res) => {postSignup(req, res)})
+app.post('/signup', (req, res) => {
+    let user = req.body.username;
+    let pass = req.body.password;
+    let conn = util.createConnection();
+    let ret = postSignup(user, pass, conn);
+    conn.end();
+    res.send(ret);
+})
 
 /**
  * Adds a task to a given user
@@ -262,12 +293,27 @@ app.post('/signup', (req, res) => {postSignup(req, res)})
  * res contains fields success, username
  * additionally error if failed
  */
-app.post('/task', (req, res) => {postTask(req, res)})
+app.post('/task', (req, res) => {
+    let user = req.body.username;
+    let task = req.body.task;
+    let deadline = req.body.deadline;
+    let conn = util.createConnection();
+    let ret = postTask(user, task, deadline, conn);
+    conn.end();
+    res.send(ret);
+})
 
 /**
  * 
  */
-app.post('/delete', (req, res) => {postDelete(req, res)})
+app.post('/delete', (req, res) => {
+    let user = req.body.username;
+    let taskid = req.body.taskid;
+    let conn = util.createConnection();
+    let ret = postDelete(user, taskid, conn);
+    conn.end();
+    res.send(ret);
+})
 
 /**
  * gets all the tasks for a given username
@@ -276,7 +322,13 @@ app.post('/delete', (req, res) => {postDelete(req, res)})
  * additionally if failed res contains field error
  * if succesful res contains field tasks
  */
-app.post('/usertask', (req, res) => {postUsertask(req, res)})
+app.post('/usertask', (req, res) => {
+    let user = req.body.username;
+    let conn = util.createConnection();
+    let ret = postUsertask(user, conn);
+    conn.end();
+    res.send(ret);
+})
 
 /**
  * gets all the tasks
