@@ -14,23 +14,23 @@ app.use(cors())
 /**
  * Functions
  */
-module.exports =
+module.exports
 {
 
-    // getBase : function(req, res)
-    // {
-    //     let jwt = util.createJWT('test');
-    //     setTimeout(function() {
-    //         let result = util.isJWTValid(jwt);
-    //         let user = '';
+    function getBase(req, res)
+    {
+        let jwt = util.createJWT('test');
+        setTimeout(function() {
+            let result = util.isJWTValid(jwt);
+            let user = '';
 
-    //         util.getJWTUser(jwt);
+            util.getJWTUser(jwt);
 
-    //         res.send({"JWT": jwt, "User": user, "Result": result});
-    //     }, 1000)
-    // }
+            res.send({"JWT": jwt, "User": user, "Result": result});
+        }, 1000)
+    }
 
-    postJWT : function (jwt)
+    function postJWT(jwt)
     {
         let user = util.getJWTUser(jwt);
         let ret =
@@ -38,9 +38,9 @@ module.exports =
             user: user
         }
         return ret;
-    },
+    }
 
-    postLogin : function (user, pass, conn)
+    function postLogin(user, pass, conn)
     {
         conn.query('select salt, pwHash from users where username = ?', user, (error, results, fields) => 
         {
@@ -72,16 +72,16 @@ module.exports =
                 return ret;
             }
         });
-    },
+    }
 
-    postVerify : function (jwt)
+    function postVerify(jwt)
     {
         let ret = {};
         ret.valid = util.isJWTValid(jwt);
         return ret;
-    },
+    }
 
-    postSignup : function (user, pass, conn)
+    function postSignup(user, pass, conn)
     {
         let salt = util.generateSalt();
         let pwHash = util.hash(pass, salt);
@@ -120,9 +120,9 @@ module.exports =
             ret.error = err;
             return ret;
         }
-    },
+    }
 
-    postTask : function (user, task, deadline, conn)
+    function postTask(user, task, deadline, conn)
     {
         // deadline needs to be in yyyy-mm-dd hh:mm:ss
         // TODO: add handling to enforce this format
@@ -143,12 +143,18 @@ module.exports =
             }
             return ret;
         });
-    },
+    }
 
-    postTaskS : function (user, task, taskid, deadline, conn)
+    function postTaskS(req, res)
     {
+        let user = req.body.username;
+        let task = req.body.task;
+        let taskid = req.body.tasks
         // deadline needs to be in yyyy-mm-dd hh:mm:ss
         // TODO: add handling to enforce this format
+        let deadline = req.body.deadline;
+        // Create connection
+        let conn = util.createConnection();
         // Form query
         conn.query('insert into tasks value ?, ?, ?, ?', [taskid, user, task, deadline], (error, results, fields) => {
             let ret = {
@@ -163,11 +169,12 @@ module.exports =
             {
                 ret.error = {code: error.code, errno: error.errno};
             }
-            return ret;
+            res.send(ret);
         });
-    }, 
+        conn.end();
+    }
 
-    postDelete : function (user, taskid, conn)
+    function postDelete(user, taskid, conn)
     {
         // Create connection
         console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
@@ -187,10 +194,12 @@ module.exports =
             }
             return ret;
         });
-    },
+    }
 
-    postUsertask : function (user, conn)
+    function postUsertask(user, conn)
     {
+        let user = req.body.username;
+        let conn = util.createConnection();
         // Form query
         conn.query('select * from tasks where username = ?', user, (error, results, fields) => 
         {
