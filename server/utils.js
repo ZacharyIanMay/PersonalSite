@@ -75,13 +75,13 @@ module.exports =
         {
             let body = base64url.decode(split[1]);
             body = JSON.parse(body);
-            let ret = this.isJWTExpired(body.exp);
+            let ret = this.isJWTNotExpired(body.exp);
             return ret;
         }
         return false;
     },
 
-    isJWTExpired : function (time)
+    isJWTNotExpired : function (time)
     {
         let now = Date.now();
         if(time > now)
@@ -96,11 +96,17 @@ module.exports =
 
     getJWTUser : function (jwt)
     {
+        body = this.getJWTBody(jwt);
+        user = body.user;
+        return user;
+    },
+
+    getJWTBody : function (jwt)
+    {
         let split = jwt.split('.');
         let body = base64url.decode(split[1]);
         body = JSON.parse(body);
-        user = body.user;
-        return user;
+        return body;
     }
 
 };
