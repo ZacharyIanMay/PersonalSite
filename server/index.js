@@ -14,6 +14,8 @@ app.use(cors())
 /**
  * Functions
  */
+module.exports =
+{
 
     // getBase : function(req, res)
     // {
@@ -28,86 +30,112 @@ app.use(cors())
     //     }, 1000)
     // }
 
-function postJWT(jwt)
-{
-    let user = util.getJWTUser(jwt);
-    let ret =
+    postJWT : function (jwt)
     {
-        user: user
-    }
-    return ret;
-}
-module.exports.postJWT = postJWT;
-
-function postLogin(user, pass, conn)
-{
-    conn.query('select salt, pwHash from users where username = ?', user, (error, results, fields) => 
-    {
-        let ret = {
-            success: false,
-            username: user
-        }
-        if(!error && results.length === 1)
+        let user = util.getJWTUser(jwt);
+        let ret =
         {
-            let salt = results[0].salt;
-            let pwHash = util.hash(pass, salt);
-            let verificationHash = results[0].pwHash;
-            if(pwHash === verificationHash)
+            user: user
+        }
+        return ret;
+    },
+
+    postLogin : function (user, pass, conn)
+    {
+        conn.query('select salt, pwHash from users where username = ?', user, (error, results, fields) => 
+        {
+            let ret = {
+                success: false,
+                username: user
+            }
+            if(!error && results.length === 1)
             {
-                let jwt = util.createJWT(user);
-                ret.success = true;
-                ret.token = jwt;
+                let salt = results[0].salt;
+                let pwHash = util.hash(pass, salt);
+                let verificationHash = results[0].pwHash;
+                if(pwHash === verificationHash)
+                {
+                    let jwt = util.createJWT(user);
+                    ret.success = true;
+                    ret.token = jwt;
+                }
+                else
+                {
+                    ret.error = "Incorrect Username or Password"
+                }
+                return ret;
             }
             else
             {
-                ret.error = "Incorrect Username or Password"
+                console.log(error);
+                ret.error =  "Incorrect Username or Password";
+                return ret;
             }
-            return ret;
+        });
+    },
+
+    postVerify : function (jwt)
+    {
+        let ret = {};
+        ret.valid = util.isJWTValid(jwt);
+        return ret;
+    },
+
+    postSignup : function (user, pass, conn)
+    {
+        let salt = util.generateSalt();
+        let pwHash = util.hash(pass, salt);
+        /**
+         * Need to add a segment handling password hash retrieval
+         */
+        // Create connection
+        let err;
+        conn.query('select pwHash from users where username = ?', [user], (error, results, fields) => {
+            if(error) err = error;
+        });
+
+        let ret = {
+            success: false,
+            username: user
+        };
+
+        if(!err)
+        {
+            conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
+                if(!error)
+                {
+                    let jwt = util.createJWT(user);
+                    ret.success = true;
+                    ret.token = jwt;
+                }
+                else
+                {
+                    ret.error = {code: error.code, errno: error.errno};
+                }
+                return ret;
+            });
         }
         else
         {
-            console.log(error);
-            ret.error =  "Incorrect Username or Password";
+            ret.error = err;
             return ret;
         }
-    });
-}
-module.exports.postLogin = postLogin;
+    },
 
-function postVerify(jwt)
-{
-    let ret = {};
-    ret.valid = util.isJWTValid(jwt);
-    return ret;
-}
-module.exports.postVerify = postVerify;
-
-function postSignup(user, pass, conn)
-{
-    let salt = util.generateSalt();
-    let pwHash = util.hash(pass, salt);
-    /**
-     * Need to add a segment handling password hash retrieval
-     */
-    // Create connection
-    let err;
-    conn.query('select pwHash from users where username = ?', [user], (error, results, fields) => {
-        if(error) err = error;
-    });
-
-    let ret = {
-        success: false,
-        username: user
-    };
-
-    if(!err)
+    postTask : function (user, task, deadline, conn)
     {
-        conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
+        // deadline needs to be in yyyy-mm-dd hh:mm:ss
+        // TODO: add handling to enforce this format
+        // Create connection
+        // Form query
+        conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
+            let ret = {
+                success: false,
+                username: user
+            }
             if(!error)
             {
-                let jwt = util.createJWT(user);
                 ret.success = true;
-                ret.token = jwt;
             }
             else
             {
@@ -115,119 +143,86 @@ function postSignup(user, pass, conn)
             }
             return ret;
         });
-    }
-    else
+    },
+
+    postTaskS : function (user, task, taskid, deadline, conn)
     {
-        ret.error = err;
-        return ret;
-    }
-}
-module.exports.postSignup = postSignup;
+        // deadline needs to be in yyyy-mm-dd hh:mm:ss
+        // TODO: add handling to enforce this format
+        // Form query
+        conn.query('insert into tasks value ?, ?, ?, ?', [taskid, user, task, deadline], (error, results, fields) => {
+            let ret = {
+                success: false,
+                username: user
+            }
+            if(!error)
+            {
+                ret.success = true;
+            }
+            else
+            {
+                ret.error = {code: error.code, errno: error.errno};
+            }
+            return ret;
+        });
+    }, 
 
-function postTask(user, task, deadline, conn)
-{
-    // deadline needs to be in yyyy-mm-dd hh:mm:ss
-    // TODO: add handling to enforce this format
-    // Create connection
-    // Form query
-    conn.query('insert into tasks (username, task, deadline) value (?, ?, ?)', [user, task, deadline], (error, results, fields) => {
-        let ret = {
-            success: false,
-            username: user
-        }
-        if(!error)
-        {
-            ret.success = true;
-        }
-        else
-        {
-            ret.error = {code: error.code, errno: error.errno};
-        }
-        return ret;
-    });
-}
-module.exports.postTask = postTask;
-
-function postTaskS(user, task, taskid, deadline, conn)
-{
-    // deadline needs to be in yyyy-mm-dd hh:mm:ss
-    // TODO: add handling to enforce this format
-    // Form query
-    conn.query('insert into tasks value ?, ?, ?, ?', [taskid, user, task, deadline], (error, results, fields) => {
-        let ret = {
-            success: false,
-            username: user
-        }
-        if(!error)
-        {
-            ret.success = true;
-        }
-        else
-        {
-            ret.error = {code: error.code, errno: error.errno};
-        }
-        return ret;
-    });
-}
-module.exports.postTaskS = postTaskS
-
- function postDelete(user, taskid, conn)
-{
-    // Create connection
-    console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
-    // Form query
-    conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
-        let ret = {
-            success: false,
-            username: user
-        }
-        if(!error)
-        {
-            ret.success = true;
-        }
-        else
-        {
-            ret.error = {code: error.code, errno: error.errno};
-        }
-        return ret;
-    });
-}
-module.exports.postDelete = postDelete;
-
-async function postUsertask(user, conn)
-{
-    // Form query
-    conn.query('select * from tasks where username = ?', user, (error, results, fields) => 
+    postDelete : function (user, taskid, conn)
     {
-        let ret = {
-            success: false,
-            username: user
-        }
-        if(error)
+        // Create connection
+        console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
+        // Form query
+        conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
+            let ret = {
+                success: false,
+                username: user
+            }
+            if(!error)
+            {
+                ret.success = true;
+            }
+            else
+            {
+                ret.error = {code: error.code, errno: error.errno};
+            }
+            return ret;
+        });
+    },
+
+    postUsertask : function (user, conn)
+    {
+        // Form query
+        conn.query('select * from tasks where username = ?', user, (error, results, fields) => 
         {
-            ret.error = error;
-        }
-        else if(results.length === 0)
-        {
-            ret.error = "No tasks";
-        }
-        else
-        {
-            ret.tasks = results;
-            ret.success = true;
-        }
-        console.log(ret);
-        return ret;
-    });
+            let ret = {
+                success: false,
+                username: user
+            }
+            if(error)
+            {
+                ret.error = error;
+            }
+            else if(results.length === 0)
+            {
+                ret.error = "No tasks";
+            }
+            else
+            {
+                ret.tasks = results;
+                ret.success = true;
+            }
+            return ret;
+        });
+    }
+
 }
-module.exports.postUsertask = postUsertask;
 
 /**
  * Endpoints
  */
 
 app.listen(PORT, () => {
-    //console.log(`App is listening at http://localhost:${PORT}`)
+    console.log(`App is listening at http://localhost:${PORT}`)
 })
 
 app.get('/', (req, res) => {
@@ -245,7 +240,7 @@ app.post('/login', (req, res) => {
     let user = req.body.username;
     let pass = req.body.password;
     let conn = util.createConnection();
-    let ret = this.postLogin(user, pass, conn);
+    let ret = postLogin(user, pass, conn);
     conn.end();
     res.send(ret);
 })
@@ -255,7 +250,7 @@ app.post('/login', (req, res) => {
  */
 app.post('/jwt', (req, res) => {
     let jwt = req.body.jwt;
-    let ret = this.postJWT(jwt)
+    let ret = postJWT(jwt)
     res.send(ret);
 })
 
@@ -264,7 +259,7 @@ app.post('/jwt', (req, res) => {
  */
 app.post('/verify', (req, res) => {
     let jwt = req.body.jwt;
-    let ret = this.postVerify(jwt);
+    let ret = postVerify(jwt);
     res.send(ret);
 })
 
@@ -278,7 +273,7 @@ app.post('/signup', (req, res) => {
     let user = req.body.username;
     let pass = req.body.password;
     let conn = util.createConnection();
-    let ret = this.postSignup(user, pass, conn);
+    let ret = postSignup(user, pass, conn);
     conn.end();
     res.send(ret);
 })
@@ -294,7 +289,7 @@ app.post('/task', (req, res) => {
     let task = req.body.task;
     let deadline = req.body.deadline;
     let conn = util.createConnection();
-    let ret = this.postTask(user, task, deadline, conn);
+    let ret = postTask(user, task, deadline, conn);
     conn.end();
     res.send(ret);
 })
@@ -306,7 +301,7 @@ app.post('/delete', (req, res) => {
     let user = req.body.username;
     let taskid = req.body.taskid;
     let conn = util.createConnection();
-    let ret = this.postDelete(user, taskid, conn);
+    let ret = postDelete(user, taskid, conn);
     conn.end();
     res.send(ret);
 })
@@ -318,15 +313,12 @@ app.post('/delete', (req, res) => {
  * additionally if failed res contains field error
  * if succesful res contains field tasks
  */
-app.post('/usertask', async (req, res) => {
+app.post('/usertask', (req, res) => {
     let user = req.body.username;
     let conn = util.createConnection();
-    await this.postUsertask(user, conn).then(result => {
-        console.log("result = " + result);
-        res.send(result);
-        conn.end();
-    });
-    
+    let ret = postUsertask(user, conn);
+    conn.end();
+    res.send(ret);
 })
 
 /**
