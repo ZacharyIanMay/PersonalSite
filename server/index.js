@@ -8,22 +8,23 @@ const mysql = require('mysql')
 app.use(express.json())
 app.use(cors())
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
     let jwt = util.createJWT('test');
     setTimeout(function() {
         let result = util.isJWTValid(jwt);
         let user = '';
 
-        util.getJWTUser(jwt);
+        user = util.getJWTUser(jwt);
 
-        res.send({"JWT": jwt, "User": user, "Result": result});
+        res.send({"jwt": jwt, "user": user, "result": result});
     }, 1000)
     
 })
 
-app.listen(PORT, () => {
-    // console.log(`App is listening at http://localhost:${PORT}`)
-})
+module.exports = app;
+// app.listen(PORT, () => {
+//     // console.log(`App is listening at http://localhost:${PORT}`)
+// })
 
 /**
  * Checks user credentials and issues a JWT login token if login is correct
@@ -32,7 +33,7 @@ app.listen(PORT, () => {
  * if failed res additionally contains error
  * if succesful res additionally contains token
  */
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     let user = req.body.username;
     let pass = req.body.password;
     let conn = util.createConnection();
@@ -72,7 +73,7 @@ app.post('/login', (req, res) => {
 /**
  * 
  */
-app.post('/jwt', (req, res) => {
+app.post('/jwt', async (req, res) => {
     let jwt = req.body.jwt;
     let user = util.getJWTUser(jwt);
     let ret =
@@ -85,7 +86,7 @@ app.post('/jwt', (req, res) => {
 /**
  * 
  */
-app.post('/verify', (req, res) => {
+app.post('/verify', async (req, res) => {
     let jwt = req.body.jwt;
     let ret = {};
     ret.valid = util.isJWTValid(jwt);
@@ -109,7 +110,7 @@ app.post('/verify', (req, res) => {
  * res contains fields success and username
  * additionally, error if failed, or token is successful
  */
-app.post('/signup', (req, res) => {
+app.post('/signup', async (req, res) => {
     let user = req.body.username;
     let pass = req.body.password;
     let salt = util.generateSalt();
@@ -159,7 +160,7 @@ app.post('/signup', (req, res) => {
  * res contains fields success, username
  * additionally error if failed
  */
-app.post('/task', (req, res) => {
+app.post('/task', async (req, res) => {
     let user = req.body.username;
     let task = req.body.task;
     // deadline needs to be in yyyy-mm-dd hh:mm:ss
@@ -189,7 +190,7 @@ app.post('/task', (req, res) => {
 /**
  * 
  */
-app.post('/delete', (req, res) => {
+app.post('/delete', async (req, res) => {
     let user = req.body.username;
     let taskid = req.body.taskid;
     // Create connection
@@ -221,7 +222,7 @@ app.post('/delete', (req, res) => {
  * additionally if failed res contains field error
  * if succesful res contains field tasks
  */
-app.post('/usertask', (req, res) => {
+app.post('/usertask', async (req, res) => {
     let user = req.body.username;
 
     let conn = util.createConnection();
@@ -251,73 +252,41 @@ app.post('/usertask', (req, res) => {
     conn.end();
 })
 
-/**
- * gets all the tasks
- * req requires fields username
- * res contains fields success
- * additionally if failed res contains field error
- * if succesful res contains field tasks
- */
-app.post('/task', (req, res) => {
-    let user = req.body.username;
+// /**
+//  * gets all the tasks
+//  * req requires fields username
+//  * res contains fields success
+//  * additionally if failed res contains field error
+//  * if succesful res contains field tasks
+//  */
+// app.post('/task', async (req, res) => {
+//     let user = req.body.username;
 
-    let conn = util.createConnection();
-    // Form query
-    conn.query('select * from tasks', user, (error, results, fields) => 
-    {
-        let ret = {
-            success: false
-        }
-        if(error)
-        {
-            ret.error = error;
-        }
-        else if(results.length === 0)
-        {
-            ret.error = "No tasks";
-        }
-        else
-        {
-            ret.tasks = results;
-            ret.success = true;
-        }
-        res.send(ret);
-    });
+//     let conn = util.createConnection();
+//     // Form query
+//     conn.query('select * from tasks', user, (error, results, fields) => 
+//     {
+//         let ret = {
+//             success: false
+//         }
+//         if(error)
+//         {
+//             ret.error = error;
+//         }
+//         else if(results.length === 0)
+//         {
+//             ret.error = "No tasks";
+//         }
+//         else
+//         {
+//             ret.tasks = results;
+//             ret.success = true;
+//         }
+//         res.send(ret);
+//     });
 
-    conn.end();
-})
-
-/**
- * Removes a task from a user's list of tasks given their username and the ID of the task to be deleted
- * req requires fields username, taskid
- * res contains fields success and username
- * additionally if failed res contains field error
- */
-app.delete('/task', (req, res) => {
-    let user = req.body.username;
-    let id = req.body.taskid;
-
-    let conn = util.createConnection();
-    // Form query
-    conn.query('delete from tasks where username = ? and taskid = ?', [user, id], (error, results, fields) => 
-    {
-        let ret = {
-            success: false,
-            username: user
-        }
-
-        if(error)
-        {
-            ret.error = error;
-        }
-        else
-        {
-            ret.success = true;
-        }
-        res.send(ret);
-    });
-    conn.end();
-})
+//     conn.end();
+// })
 
 // app.post('/project', (req, res) => {
 
