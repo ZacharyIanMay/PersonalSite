@@ -38,7 +38,7 @@ module.exports =
         return r;
     },
 
-    createJWT : function (user)
+    createJWT : function (user, ip)
     {
         let jwt;
         let header = 
@@ -56,7 +56,8 @@ module.exports =
             "iss": "Jal Home",
             "iat": now,
             "exp": exp,
-            "user": user
+            "user": user,
+            "ip" : ip
         }
         let bodyEnc = base64url(JSON.stringify(body));
 
@@ -66,7 +67,7 @@ module.exports =
         return jwt;
     },
 
-    isJWTValid : function (JWT)
+    isJWTValid : function (JWT, ip)
     {
         let split = JWT.split('.');
         let ver = split[0] + '.' + split[1];
@@ -76,6 +77,10 @@ module.exports =
             let body = base64url.decode(split[1]);
             body = JSON.parse(body);
             let ret = this.isJWTNotExpired(body.exp);
+            if(ip !== body.ip)
+            {
+                ret = false;
+            }
             return ret;
         }
         return false;

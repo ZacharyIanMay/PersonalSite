@@ -9,7 +9,8 @@ app.use(express.json())
 app.use(cors())
 
 app.get('/', async (req, res) => {
-    let jwt = util.createJWT('test');
+    let jwt = util.createJWT('test', req.ip);
+    console.log(req.ip);
     setTimeout(function() {
         let result = util.isJWTValid(jwt);
         let user = '';
@@ -50,7 +51,7 @@ app.post('/login', async (req, res) => {
             let verificationHash = results[0].pwHash;
             if(pwHash === verificationHash)
             {
-                let jwt = util.createJWT(user);
+                let jwt = util.createJWT(user, req.ip);
                 ret.success = true;
                 ret.token = jwt;
             }
@@ -75,10 +76,11 @@ app.post('/login', async (req, res) => {
  */
 app.post('/jwt', async (req, res) => {
     let jwt = req.body.jwt;
-    let user = util.getJWTUser(jwt);
+    let body = util.getJWTBody(jwt);
     let ret =
     {
-        user: user
+        user: body.user,
+        ip: body.ip
     }
     res.send(ret);
 })
@@ -89,7 +91,7 @@ app.post('/jwt', async (req, res) => {
 app.post('/verify', async (req, res) => {
     let jwt = req.body.jwt;
     let ret = {};
-    ret.valid = util.isJWTValid(jwt);
+    ret.valid = util.isJWTValid(jwt, req.ip);
     res.send(ret);
 })
 
@@ -135,7 +137,7 @@ app.post('/signup', async (req, res) => {
         conn.query('insert into users value (?, ?, ?)', [user, pwHash, salt], (error, results, fields) => {
             if(!error)
             {
-                let jwt = util.createJWT(user);
+                let jwt = util.createJWT(user, req.ip);
                 ret.success = true;
                 ret.token = jwt;
             }
