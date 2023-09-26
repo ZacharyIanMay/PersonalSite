@@ -10,7 +10,6 @@ app.use(cors())
 
 app.get('/', async (req, res) => {
     let jwt = util.createJWT('test', req.ip);
-    console.log(req.ip);
     setTimeout(function() {
         let result = util.isJWTValid(jwt);
         let user = '';
@@ -38,7 +37,7 @@ app.post('/login', async (req, res) => {
     let user = req.body.username;
     let pass = req.body.password;
     let conn = util.createConnection();
-    conn.query('select salt, pwHash from users where username = ?', user, (error, results, fields) => 
+    conn.query('select salt, pwHash from users where username = ?', [user], (error, results, fields) => 
     {
         let ret = {
             success: false,
@@ -63,7 +62,6 @@ app.post('/login', async (req, res) => {
         }
         else
         {
-            console.log(error);
             ret.error =  "Incorrect Username or Password";
             res.send(ret);
         }
@@ -189,17 +187,17 @@ app.post('/task', async (req, res) => {
     conn.end();
 })
 
-/**
- * 
- */
-app.post('/delete', async (req, res) => {
+app.post('/taskS', async (req, res) => {
     let user = req.body.username;
-    let taskid = req.body.taskid;
+    let task = req.body.task;
+    let id = req.body.taskid
+    // deadline needs to be in yyyy-mm-dd hh:mm:ss
+    // TODO: add handling to enforce this format
+    let deadline = req.body.deadline;
     // Create connection
     let conn = util.createConnection();
-    console.log(`delete from tasks where username = ${user} and taskid = ${taskid}`);
     // Form query
-    conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
+    conn.query('insert into tasks (taskid, username, task, deadline) value (?, ?, ?, ?)', [id, user, task, deadline], (error, results, fields) => {
         let ret = {
             success: false,
             username: user
@@ -214,6 +212,47 @@ app.post('/delete', async (req, res) => {
         }
         res.send(ret);
     });
+    conn.end();
+})
+
+/**
+ * 
+ */
+app.post('/delete', async (req, res) => {
+    let user = req.body.username;
+    let taskid = req.body.taskid;
+    // Create connection
+    let conn = util.createConnection();
+    let err;
+    
+    let ret = {
+        success: false,
+        username: user
+    }
+
+    conn.query('select * from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
+        if(results.length === 0)
+        {
+            err = "No such task";
+            ret.error = err;
+            res.send(ret);
+        }
+    });
+    // Form query
+    if(err)
+    {
+        conn.query('delete from tasks where username = ? and taskid = ?', [user, taskid], (error, results, fields) => {
+            if(!error)
+            {
+                ret.success = true;
+            }
+            else
+            {
+                ret.error = {code: error.code, errno: error.errno};
+            }
+            res.send(ret);
+        });
+    }
     conn.end();
 })
 
